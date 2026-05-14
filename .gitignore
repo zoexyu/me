@@ -8,3 +8,7 @@ proxy_server.py
 pixel-opening.html
 *.jsonl
 node_modules/
+.wrangler/
+messages.json
+stats.json
+generate_doc.py

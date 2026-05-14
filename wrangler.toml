@@ -2,6 +2,10 @@ name = "zoexyu-api"
 main = "worker.js"
 compatibility_date = "2026-05-14"
 
+[[kv_namespaces]]
+binding = "ZoeXyu_KV"
+id = "534791af87254f5496982f718c7524db"
+
 [[routes]]
 pattern = "zoexyu.top/api/*"
 zone_name = "zoexyu.top"
