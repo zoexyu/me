@@ -33,25 +33,30 @@ body {
   color: var(--text);
   line-height: 1.7;
   min-height: 100vh;
-  /* Linen paper texture over background image */
+  padding: 0;
+}
+
+/* Fixed background layers — works on mobile unlike background-attachment:fixed */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
   background-image:
     url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E"),
     url("https://img.imgos.cn/cdn/20260501/235dfd077f329ddecce3f6b2067c2153.jpeg");
   background-size: auto, cover;
   background-position: center;
   background-repeat: repeat, no-repeat;
-  background-attachment: fixed;
-  padding: 0;
+  pointer-events: none;
 }
 
 /* ============================================
    NOISE OVERLAY
    ============================================ */
-body::before {
-  content: '';
+.noise-layer {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
   background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
@@ -61,10 +66,16 @@ body::before {
    ============================================ */
 main {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   max-width: 880px;
   margin: 0 auto;
   padding: 3rem 1.5rem 5rem;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+.curved {
+  transition: transform 0.15s ease-out;
 }
 
 /* ============================================
@@ -680,10 +691,13 @@ footer .ps {
 </head>
 <body>
 
+<div class="bg-layer"></div>
+<div class="noise-layer"></div>
+
 <main>
 
   <!-- ===== HERO ===== -->
-  <section class="hero reveal">
+  <section class="hero reveal curved">
     <img class="hero-photo reveal-d1"
          src="https://img.imgos.cn/cdn/20260501/a2de5622d0b3619777c49d1c83760d5f.jpeg"
          alt="张潇予"
@@ -774,7 +788,7 @@ footer .ps {
   </section>
 
   <!-- ===== MESSAGE BOARD ===== -->
-  <section class="msgboard-section reveal reveal-d5">
+  <section class="msgboard-section reveal reveal-d5 curved">
     <div class="section-head">
       <div class="rule accent"></div>
       <h2>留下足迹</h2>
@@ -800,7 +814,7 @@ footer .ps {
   </section>
 
   <!-- ===== FOOTER ===== -->
-  <footer class="reveal reveal-d5">
+  <footer class="reveal reveal-d5 curved">
     <div class="social-links">
       <a href="https://www.xiaohongshu.com/user/profile/6667e9cb00000000030331a1" target="_blank" rel="noopener">小红书</a>
       <a href="https://v.douyin.com/8a1_tHtWg8E/" target="_blank" rel="noopener">抖音</a>
@@ -809,6 +823,9 @@ footer .ps {
     </div>
     <p class="ps">
       很高兴认识你。
+    </p>
+    <p style="margin-top:1rem">
+      <a href="/workflow" style="font-size:0.72rem; color:var(--muted); text-decoration:none; letter-spacing:0.06em; opacity:0.5; transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'">这个网站是怎么搭起来的 &rarr;</a>
     </p>
   </footer>
 
@@ -1056,6 +1073,30 @@ footer .ps {
   });
 
   loadMessages();
+
+  // ===== 曲面滚动动效 =====
+  var curvedEls = document.querySelectorAll('.curved');
+  function updateCurves() {
+    var vh = window.innerHeight;
+    var centerY = vh / 2;
+    var isMobile = vh < 768;
+    var maxAngle = isMobile ? 1.5 : 3.5;
+
+    for (var i = 0; i < curvedEls.length; i++) {
+      var el = curvedEls[i];
+      var rect = el.getBoundingClientRect();
+      var elCenter = rect.top + rect.height / 2;
+      var offset = (elCenter - centerY) / centerY; // -1 to 1
+      var angle = (offset * maxAngle).toFixed(2);
+      el.style.transform = 'rotateX(' + angle + 'deg)';
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    requestAnimationFrame(updateCurves);
+  }, { passive: true });
+
+  updateCurves();
 })();
 </script>
 

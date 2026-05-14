@@ -71,22 +71,35 @@ class Handler(BaseHTTPRequestHandler):
             self._json_response(200, msgs)
             return
 
-        if self.path != '/':
-            self.send_response(404)
-            self.end_headers()
+        if self.path in ('/workflow', '/workflow.html'):
+            try:
+                wf_file = os.path.join(HERE, 'workflow.html')
+                with open(wf_file, 'r', encoding='utf-8') as f:
+                    html = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(html.encode('utf-8'))
+            except FileNotFoundError:
+                self.send_response(500)
+                self.end_headers()
             return
 
-        try:
-            with open(HTML_FILE, 'r', encoding='utf-8') as f:
-                html = f.read()
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html; charset=utf-8')
-            self.end_headers()
-            self.wfile.write(html.encode('utf-8'))
-        except FileNotFoundError:
-            self.send_response(500)
-            self.end_headers()
-            self.wfile.write(b'index.html not found')
+        if self.path == '/':
+            try:
+                with open(HTML_FILE, 'r', encoding='utf-8') as f:
+                    html = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(html.encode('utf-8'))
+            except FileNotFoundError:
+                self.send_response(500)
+                self.end_headers()
+            return
+
+        self.send_response(404)
+        self.end_headers()
 
     def do_OPTIONS(self):
         self.send_response(204)

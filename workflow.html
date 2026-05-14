@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工作流 · 张潇予</title>
+<style>
+/* ============================================
+   VARIABLES
+   ============================================ */
+:root {
+  --paper: #f5f0e8;
+  --text: #2d2a26;
+  --accent: #c41e3a;
+  --ink: #1a2a3a;
+  --muted: #8c8580;
+  --card: rgba(255,255,255,0.55);
+  --border: #d4cec4;
+  --gap: 1.5rem;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior:smooth; }
+
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* Fixed background layers */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E"),
+    url("https://img.imgos.cn/cdn/20260501/235dfd077f329ddecce3f6b2067c2153.jpeg");
+  background-size: auto, cover;
+  background-position: center;
+  background-repeat: repeat, no-repeat;
+}
+
+.noise-layer {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ============================================
+   MAIN LAYOUT
+   ============================================ */
+main {
+  position: relative; z-index: 2;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.workflow-header {
+  text-align: center;
+  margin-bottom: 5rem;
+  position: relative;
+}
+
+.back-link {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+
+.back-link:hover { color: var(--accent); }
+
+.workflow-header h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.workflow-header .subtitle {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 0.6rem;
+  letter-spacing: 0.06em;
+}
+
+/* ============================================
+   PIPELINE
+   ============================================ */
+.pipeline {
+  position: relative;
+}
+
+/* SVG overlay for pipe lines */
+.pipeline-svg {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pipeline-svg line {
+  stroke: var(--border);
+  stroke-width: 2;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.pipeline-svg line.active {
+  stroke: var(--accent);
+  stroke-dashoffset: 0;
+}
+
+/* ============================================
+   NODE CARDS
+   ============================================ */
+.node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 4rem;
+  opacity: 0;
+  transform: perspective(600px) rotateY(15deg) translateX(30px);
+  transition: opacity 0.8s cubic-bezier(0.22, 0.61, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.node.visible {
+  opacity: 1;
+  transform: perspective(600px) rotateY(0deg) translateX(0);
+}
+
+/* Alternating left/right */
+.node:nth-child(even) {
+  flex-direction: row-reverse;
+  text-align: right;
+  transform: perspective(600px) rotateY(-15deg) translateX(-30px);
+}
+.node:nth-child(even).visible {
+  transform: perspective(600px) rotateY(0deg) translateX(0);
+}
+
+.node-dot {
+  flex-shrink: 0;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--border);
+  position: relative;
+  z-index: 2;
+  transition: all 0.5s ease;
+  margin-top: 0.6rem;
+}
+
+.node.visible .node-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(196,30,58,0.3);
+}
+
+.node-card {
+  flex: 1;
+  max-width: 480px;
+  background: var(--card);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  transition: box-shadow 0.5s;
+}
+
+.node.visible .node-card {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.step-num {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--border);
+  line-height: 1;
+  display: block;
+  transition: color 0.5s;
+}
+
+.node.visible .step-num {
+  color: var(--accent);
+}
+
+.node-card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0.3rem 0 0.4rem;
+  color: var(--text);
+}
+
+.node-card .icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.node-card p {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.node-card .tag {
+  display: inline-block;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--text);
+  color: var(--paper);
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+  margin-top: 0.5rem;
+}
+
+/* ============================================
+   CODE PARTICLES
+   ============================================ */
+.particles {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  font-family: 'Courier New', monospace;
+  font-size: 0.6rem;
+  color: var(--muted);
+  opacity: 0;
+  white-space: nowrap;
+  animation: floatUp 8s linear infinite;
+}
+
+@keyframes floatUp {
+  0%   { opacity:0; transform:translateY(100vh) rotate(0deg); }
+  5%   { opacity:0.12; }
+  90%  { opacity:0.08; }
+  100% { opacity:0; transform:translateY(-10vh) rotate(180deg); }
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.workflow-footer {
+  text-align: center;
+  margin-top: 5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.workflow-footer p {
+  font-size: 0.78rem;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.workflow-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  main { padding: 2rem 1rem 4rem; }
+
+  .node {
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .node-card { padding: 1rem 1.2rem; }
+
+  .step-num { font-size: 1.6rem; }
+
+  .particle { animation-duration: 6s; }
+}
+
+@media (max-width: 480px) {
+  .node, .node:nth-child(even) {
+    flex-direction: column;
+    text-align: left;
+    transform: perspective(600px) rotateY(8deg) translateX(15px);
+  }
+
+  .node.visible, .node:nth-child(even).visible {
+    transform: perspective(600px) rotateY(0deg) translateX(0);
+  }
+
+  .node-dot { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="noise-layer"></div>
+
+<!-- Code particles -->
+<div class="particles" id="particles"></div>
+
+<main>
+  <header class="workflow-header">
+    <a href="/" class="back-link">&larr; 回到主页</a>
+    <h1>这个网站是怎么搭起来的</h1>
+    <p class="subtitle">一部 vibe coding 简史</p>
+  </header>
+
+  <div class="pipeline" id="pipeline">
+    <svg class="pipeline-svg" id="pipeline-svg" viewBox="0 0 4 1000" preserveAspectRatio="none">
+      <line x1="2" y1="0" x2="2" y2="1000" />
+    </svg>
+
+    <div class="node" data-step="1">
+      <div class="node-dot"></div>
+      <div class="node-card">
+        <span class="icon">💡</span>
+        <span class="step-num">01</span>
+        <h2>我想要一个自己的网页</h2>
+        <p>2026 年春天，突然想有个地方——让朋友能找到自己，能跟自己说说话。不需要很复杂，能聊天、能留言就行。</p>
+        <span class="tag">why</span>
+      </div>
+    </div>
+
+    <div class="node" data-step="2">
+      <div class="node-dot"></div>
+      <div class="node-card">
+        <span class="icon">🤖</span>
+        <span class="step-num">02</span>
+        <h2>Claude Code 帮我写代码</h2>
+        <p>我不会写前端，但有 AI。跟 Claude Code 聊了几个来回，它帮我把想法变成了 HTML、CSS、JavaScript。vibe coding —— 说话就能写代码。</p>
+        <span class="tag">vibe coding</span>
+      </div>
+    </div>
+
+    <div class="node" data-step="3">
+      <div class="node-dot"></div>
+      <div class="node-card">
+        <span class="icon">🎨</span>
+        <span class="step-num">03</span>
+        <h2>纸质感 · 墨水 · 暗红</h2>
+        <p>选了一种"纸"的质感——亚麻纹理、噪点叠加、打字机式的字体排印。暗红色是唯一跳出来的颜色，像印章。朋友说这风格挺"我"的。</p>
+        <span class="tag">设计</span>
+      </div>
+    </div>
+
+    <div class="node" data-step="4">
+      <div class="node-dot"></div>
+      <div class="node-card">
+        <span class="icon">🔀</span>
+        <span class="step-num">04</span>
+        <h2>代码推上 GitHub</h2>
+        <p>所有代码开源在 <code>zoexyu/me</code>。每次改动 commit + push，GitHub Actions 自动把网站部署到 Cloudflare。</p>
+        <span class="tag">开源</span>
+      </div>
+    </div>
+
+    <div class="node" data-step="5">
+      <div class="node-dot"></div>
+      <div class="node-card">
+        <span class="icon">☁️</span>
+        <span class="step-num">05</span>
+        <h2>Cloudflare 部署到全球</h2>
+        <p>两个 Worker 扛起整个网站——一个管静态页面，一个管 API 代理和留言板。KV 做存储，不用数据库。域名绑在 Cloudflare，国内直连不挂梯子。</p>
+        <span class="tag">infra</span>
+      </div>
+    </div>
+
+    <div class="node" data-step="6">
+      <div class="node-dot"></div>
+      <div class="node-card">
+        <span class="icon">🌐</span>
+        <span class="step-num">06</span>
+        <h2>zoexyu.top 上线</h2>
+        <p>域名 14 块钱一年，阿里云买的。从有想法到上线，全程一个人 + AI，没写一行后端代码。就这样，这个网站诞生了。</p>
+        <span class="tag">live</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="workflow-footer">
+    <p>全程 vibe coding，<a href="https://github.com/zoexyu/me" target="_blank" rel="noopener">代码开源在 GitHub</a>。</p>
+  </footer>
+</main>
+
+<script>
+(function() {
+  // ===== 代码粒子 =====
+  var particles = document.getElementById('particles');
+  var snippets = [
+    '<div>', '</style>', 'fetch()', 'export', 'const API', 'function',
+    'git push', 'npm run', 'curl -s', 'worker.js', 'wrangler', 'async',
+    'return', 'import', 'JSON', 'await', 'deploy', 'KV.put',
+    'onclick', 'addEventListener', 'border:', 'color:', 'var API',
+    'index.html', 'wrangler.toml', 'zoexyu.top', 'Cloudflare'
+  ];
+
+  for (var i = 0; i < 18; i++) {
+    var span = document.createElement('span');
+    span.className = 'particle';
+    span.textContent = snippets[Math.floor(Math.random() * snippets.length)];
+    span.style.left = Math.random() * 90 + '%';
+    span.style.animationDelay = Math.random() * 8 + 's';
+    span.style.animationDuration = (6 + Math.random() * 10) + 's';
+    particles.appendChild(span);
+  }
+
+  // ===== 节点入场动画 =====
+  var nodes = document.querySelectorAll('.node');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '0px 0px -40px 0px' });
+
+  nodes.forEach(function(node) {
+    observer.observe(node);
+  });
+
+  // ===== 管线绘制动画 =====
+  var svgLine = document.querySelector('.pipeline-svg line');
+  var pipeline = document.getElementById('pipeline');
+  var totalLength = svgLine.getTotalLength ? svgLine.getTotalLength() : 1000;
+  svgLine.setAttribute('stroke-dasharray', totalLength);
+  svgLine.setAttribute('stroke-dashoffset', totalLength);
+
+  var pipeObserver = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      svgLine.classList.add('active');
+    }
+  }, { threshold: 0 });
+
+  pipeObserver.observe(pipeline);
+})();
+</script>
+
+</body>
+</html>
