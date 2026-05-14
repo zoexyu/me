@@ -1,0 +1,7 @@
+name = "zoexyu-api"
+main = "worker.js"
+compatibility_date = "2026-05-14"
+
+[[routes]]
+pattern = "zoexyu.top/api/*"
+zone_name = "zoexyu.top"
