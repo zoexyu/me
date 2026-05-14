@@ -450,6 +450,155 @@ main {
 }
 
 /* ============================================
+   MESSAGE BOARD
+   ============================================ */
+.msgboard-section {
+  margin: 3rem 0;
+}
+
+.msgboard {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.msgboard-form {
+  background: var(--card);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.form-row:last-child { margin-bottom: 0; }
+
+.msgboard-form input[type="text"] {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.78rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+
+.msgboard-form input[type="text"]:focus {
+  border-color: var(--accent);
+}
+
+.anon-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.msgboard-form textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.55rem 0.6rem;
+  font-size: 0.78rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+}
+
+.msgboard-form textarea:focus {
+  border-color: var(--accent);
+}
+
+.form-submit-row {
+  justify-content: space-between;
+}
+
+.char-count {
+  font-size: 0.65rem;
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.msgboard-form button {
+  border: none;
+  background: var(--text);
+  color: var(--paper);
+  padding: 0.45rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.msgboard-form button:hover { background: var(--accent); }
+.msgboard-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.msg-feedback {
+  font-size: 0.68rem;
+  margin-top: 0.3rem;
+  min-height: 1em;
+}
+
+.msg-feedback.ok { color: #60c060; }
+.msg-feedback.err { color: var(--accent); }
+
+.msgboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.msg-card {
+  background: var(--card);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.6rem 0.8rem;
+  animation: msgIn 0.35s ease-out both;
+}
+
+.msg-card .msg-meta {
+  font-size: 0.62rem;
+  color: var(--muted);
+  opacity: 0.55;
+  margin-bottom: 0.25rem;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.msg-card .msg-body {
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.msgboard-empty {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+  opacity: 0.4;
+  padding: 1rem;
+}
+
+/* ============================================
    FOOTER
    ============================================ */
 footer {
@@ -620,6 +769,32 @@ footer .ps {
         <input type="text" id="chat-input" placeholder="想说点什么？" autocomplete="off">
         <button id="chat-send" type="button">发送</button>
       </div>
+    </div>
+  </section>
+
+  <!-- ===== MESSAGE BOARD ===== -->
+  <section class="msgboard-section reveal reveal-d5">
+    <div class="section-head">
+      <div class="rule accent"></div>
+      <h2>留下足迹</h2>
+      <div class="rule"></div>
+    </div>
+
+    <div class="msgboard">
+      <div class="msgboard-form">
+        <div class="form-row">
+          <input type="text" id="msg-name" placeholder="你的名字（选填）" maxlength="20">
+          <label class="anon-label"><input type="checkbox" id="msg-anon"> 匿名</label>
+        </div>
+        <textarea id="msg-text" placeholder="bug、建议、想说的话..." maxlength="500" rows="3"></textarea>
+        <div class="form-row form-submit-row">
+          <span class="char-count" id="char-count">0/500</span>
+          <button id="msg-send" type="button">提交留言</button>
+        </div>
+        <div class="msg-feedback" id="msg-feedback"></div>
+      </div>
+
+      <div class="msgboard-list" id="msgboard-list"></div>
     </div>
   </section>
 
@@ -798,6 +973,88 @@ footer .ps {
 
   updateStatus();
   setInterval(updateStatus, 60000);
+
+  // ===== 留言板 =====
+  var msgName = document.getElementById('msg-name');
+  var msgAnon = document.getElementById('msg-anon');
+  var msgText = document.getElementById('msg-text');
+  var msgSend = document.getElementById('msg-send');
+  var msgFeedback = document.getElementById('msg-feedback');
+  var msgList = document.getElementById('msgboard-list');
+  var charCount = document.getElementById('char-count');
+
+  msgAnon.addEventListener('change', function() {
+    msgName.disabled = this.checked;
+    if (this.checked) msgName.value = '';
+  });
+
+  msgText.addEventListener('input', function() {
+    charCount.textContent = this.value.length + '/500';
+  });
+
+  function renderMessage(m) {
+    var card = document.createElement('div');
+    card.className = 'msg-card';
+    card.innerHTML = '<div class="msg-meta"><span>' + m.name + '</span><span>' + m.time + '</span></div>'
+      + '<div class="msg-body">' + m.message.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
+    msgList.prepend(card);
+  }
+
+  function loadMessages() {
+    fetch(window.location.origin + '/messages')
+      .then(function(r) { return r.json(); })
+      .then(function(msgs) {
+        msgList.innerHTML = '';
+        if (!msgs.length) {
+          msgList.innerHTML = '<div class="msgboard-empty">还没有留言，来做第一个吧~</div>';
+          return;
+        }
+        msgs.reverse().forEach(renderMessage);
+      })
+      .catch(function() {
+        msgList.innerHTML = '<div class="msgboard-empty">留言加载失败</div>';
+      });
+  }
+
+  msgSend.addEventListener('click', function() {
+    var text = msgText.value.trim();
+    if (!text) return;
+
+    msgSend.disabled = true;
+    msgFeedback.className = 'msg-feedback';
+    msgFeedback.textContent = '提交中...';
+
+    fetch(window.location.origin + '/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: msgName.value.trim(),
+        is_anonymous: msgAnon.checked,
+        message: text,
+      }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          msgFeedback.className = 'msg-feedback ok';
+          msgFeedback.textContent = '留言成功！';
+          msgText.value = '';
+          charCount.textContent = '0/500';
+          loadMessages();
+        } else {
+          msgFeedback.className = 'msg-feedback err';
+          msgFeedback.textContent = data.error || '提交失败';
+        }
+        msgSend.disabled = false;
+      })
+      .catch(function() {
+        msgFeedback.className = 'msg-feedback err';
+        msgFeedback.textContent = '提交失败，稍后再试';
+        msgSend.disabled = false;
+      });
+  });
+
+  loadMessages();
 })();
 </script>
 

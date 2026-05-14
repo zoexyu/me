@@ -15,6 +15,7 @@ DAILY_LIMIT = 100  # Coze 免费每日调用次数
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HTML_FILE = os.path.join(HERE, 'index.html')
+MESSAGES_FILE = os.path.join(HERE, 'messages.json')
 
 # 状态追踪
 today = date.today().isoformat()
@@ -26,6 +27,21 @@ stats = {
     'last_error': None,
     'coze_status': 'normal',  # normal | exhausted | error
 }
+
+
+def _load_messages():
+    if not os.path.exists(MESSAGES_FILE):
+        return []
+    try:
+        with open(MESSAGES_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def _save_messages(msgs):
+    with open(MESSAGES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(msgs, f, ensure_ascii=False, indent=2)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -41,6 +57,11 @@ class Handler(BaseHTTPRequestHandler):
                 'subscription_end': SUBSCRIPTION_END,
                 'model': '扣子(Coze) · 豆包通用模型',
             })
+            return
+
+        if self.path == '/messages':
+            msgs = _load_messages()
+            self._json_response(200, msgs)
             return
 
         if self.path != '/':
@@ -72,6 +93,34 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(raw_body)
         except (UnicodeDecodeError, json.JSONDecodeError):
             body = json.loads(raw_body.decode('gbk'))
+
+        # 留言板
+        if self.path == '/messages':
+            name = body.get('name', '').strip()
+            msg_text = body.get('message', '').strip()
+            is_anon = body.get('is_anonymous', False)
+            if not msg_text or len(msg_text) > 500:
+                self.send_response(400)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': '留言不能为空且不超过500字'}).encode())
+                return
+            msgs = _load_messages()
+            msgs.append({
+                'id': len(msgs) + 1,
+                'name': '匿名' if is_anon else (name or '匿名'),
+                'message': msg_text,
+                'time': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'is_anonymous': is_anon,
+            })
+            _save_messages(msgs)
+            print(f'[留言] {msg_text[:30]}', flush=True)
+            self.send_response(201)
+            self._cors()
+            self.end_headers()
+            self.wfile.write(json.dumps({'ok': True}).encode())
+            return
+
         print(f'[请求] {body.get("query", "")[:30]}', flush=True)
 
         # 日切重置
