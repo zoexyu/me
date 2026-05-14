@@ -12,3 +12,4 @@ node_modules/
 messages.json
 stats.json
 generate_doc.py
+serve_static.js
