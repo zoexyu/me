@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>张潇予 · Zoexyu</title>
+<style>
+/* ============================================
+   CSS VARIABLES
+   ============================================ */
+:root {
+  --paper: #f5f0e8;
+  --text: #2d2a26;
+  --accent: #c41e3a;
+  --ink: #1a2a3a;
+  --muted: #8c8580;
+  --card: rgba(255,255,255,0.55);
+  --border: #d4cec4;
+  --gold: #b8943e;
+  --gap: 1.5rem;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior:smooth; }
+
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 100vh;
+  /* Linen paper texture over background image */
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E"),
+    url("https://img.imgos.cn/cdn/20260501/235dfd077f329ddecce3f6b2067c2153.jpeg");
+  background-size: auto, cover;
+  background-position: center;
+  background-repeat: repeat, no-repeat;
+  background-attachment: fixed;
+  padding: 0;
+}
+
+/* ============================================
+   NOISE OVERLAY
+   ============================================ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ============================================
+   MAIN CONTAINER
+   ============================================ */
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+.hero {
+  display: flex;
+  align-items: flex-end;
+  gap: 2.5rem;
+  padding: 2rem 0 3rem;
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.hero::after {
+  content: '★ 2026';
+  position: absolute;
+  right: 0;
+  bottom: -2.2rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.hero-photo {
+  flex-shrink: 0;
+  width: 150px;
+  height: auto;
+  border-radius: 2px;
+  object-fit: contain;
+  filter: grayscale(15%);
+  box-shadow:
+    8px 8px 0 rgba(196,30,58,0.12),
+    0 0 0 1px var(--border);
+  transition: filter 0.4s, box-shadow 0.4s;
+}
+
+.hero-photo:hover {
+  filter: grayscale(0%);
+  box-shadow:
+    12px 12px 0 rgba(196,30,58,0.18),
+    0 0 0 1px var(--border);
+}
+
+.hero-text { flex:1; }
+
+.hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.hero h1 .en {
+  display: block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 0.45em;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-top: 0.15em;
+}
+
+.hero .tagline {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-top: 0.75rem;
+  line-height: 1.5;
+}
+
+.hero .tagline em {
+  font-style: normal;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ============================================
+   SECTION HEADERS
+   ============================================ */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-head .rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.section-head .rule.accent {
+  flex: 0 0 2rem;
+  height: 2px;
+  background: var(--accent);
+}
+
+.section-head h2 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ============================================
+   CHAT SECTION
+   ============================================ */
+.chat-section {
+  margin: 3rem 0;
+}
+
+.chat-window {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  max-width: 520px;
+  margin: 0 auto;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+}
+
+.chat-header {
+  background: var(--text);
+  color: var(--paper);
+  padding: 0.7rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chat-header .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #60c060;
+  box-shadow: 0 0 4px rgba(96,192,96,0.5);
+}
+
+.chat-header .name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.chat-header .status {
+  margin-left: auto;
+  font-size: 0.68rem;
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+/* 消息区 */
+.chat-messages {
+  padding: 1.25rem 1rem;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 29px,
+      rgba(0,0,0,0.025) 29px,
+      rgba(0,0,0,0.025) 30px
+    );
+}
+
+.msg {
+  max-width: 78%;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.83rem;
+  line-height: 1.55;
+  animation: msgIn 0.45s ease-out both;
+  position: relative;
+}
+
+.msg.from-her {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid #e8e3da;
+  border-radius: 3px 14px 14px 14px;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  margin-left: 0.3rem;
+}
+
+.msg.from-her::before {
+  content: '她';
+  position: absolute;
+  left: -1.3rem;
+  top: 0.15rem;
+  font-size: 0.55rem;
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.msg.from-me {
+  align-self: flex-end;
+  background: #3a4a5a;
+  color: #fff;
+  border-radius: 14px 3px 14px 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  margin-right: 0.3rem;
+}
+
+.msg.from-me::after {
+  content: '你';
+  position: absolute;
+  right: -1.15rem;
+  top: 0.15rem;
+  font-size: 0.55rem;
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.msg .time {
+  font-size: 0.6rem;
+  opacity: 0.35;
+  margin-top: 0.25rem;
+  text-align: right;
+}
+
+@keyframes msgIn {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* 输入区 */
+.chat-input-area {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.chat-input-area input {
+  flex: 1;
+  border: none;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.83rem;
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+}
+
+.chat-input-area input::placeholder {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.chat-input-area input:disabled {
+  background: #fafaf6;
+  color: var(--muted);
+}
+
+.chat-input-area button {
+  border: none;
+  background: var(--text);
+  color: var(--paper);
+  padding: 0.7rem 1.1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.chat-input-area button:hover { background: var(--accent); }
+.chat-input-area button:active { transform: scale(0.97); }
+.chat-input-area button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+footer {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.social-links a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  padding: 0.3em 0;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.social-links a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+footer .ps {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.8;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  main { padding: 1.5rem 1rem 3rem; }
+
+  .hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.25rem;
+  }
+
+  .hero-photo { width: 110px; }
+}
+
+@media (max-width: 480px) {
+  .chat-window { max-width: 100%; }
+}
+
+/* ============================================
+   SCROLL REVEAL (CSS-only)
+   ============================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: reveal 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes reveal {
+  to { opacity:1; transform:translateY(0); }
+}
+
+.reveal-d1 { animation-delay: 0.1s; }
+.reveal-d2 { animation-delay: 0.2s; }
+.reveal-d3 { animation-delay: 0.3s; }
+.reveal-d4 { animation-delay: 0.4s; }
+.reveal-d5 { animation-delay: 0.5s; }
+</style>
+</head>
+<body>
+
+<main>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero reveal">
+    <img class="hero-photo reveal-d1"
+         src="https://img.imgos.cn/cdn/20260501/a2de5622d0b3619777c49d1c83760d5f.jpeg"
+         alt="张潇予"
+         loading="eager">
+    <div class="hero-text reveal-d2">
+      <h1>
+        张潇予
+        <span class="en">Zoexyu</span>
+      </h1>
+      <p class="tagline">
+        <em>药学大二</em> · 鞍山 · ENTP<br>
+        赛车 · 台球 · 金属乐 · 写作
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== CHAT ===== -->
+  <section class="chat-section reveal reveal-d4" id="chat">
+    <div class="section-head">
+      <div class="rule accent"></div>
+      <h2>和我说说话</h2>
+      <div class="rule"></div>
+    </div>
+
+    <div class="chat-window">
+      <div class="chat-header">
+        <div class="dot"></div>
+        <span class="name">张潇予</span>
+        <span class="status">在线</span>
+      </div>
+
+      <div class="chat-messages" id="chat-msgs">
+        <div class="msg from-her" style="animation-delay:0.15s">
+          嘿嘿 你是从哪找过来的呀
+          <div class="time">22:14</div>
+        </div>
+        <div class="msg from-me" style="animation-delay:0.45s">
+          朋友推荐的！说你这人很有意思
+        </div>
+        <div class="msg from-her" style="animation-delay:0.75s">
+          是嘛，我就知道我很有魅力
+          <div class="time">22:15</div>
+        </div>
+        <div class="msg from-me" style="animation-delay:1.05s">
+          听说你喜欢F1？
+        </div>
+        <div class="msg from-her" style="animation-delay:1.35s">
+          我是喜欢看赛车，你咋知道的！太懂我了
+          <div class="time">22:16</div>
+        </div>
+      </div>
+
+      <div class="chat-input-area" id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="想说点什么？" autocomplete="off">
+        <button id="chat-send" type="button">发送</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="reveal reveal-d5">
+    <div class="social-links">
+      <a href="https://www.xiaohongshu.com/user/profile/6667e9cb00000000030331a1" target="_blank" rel="noopener">小红书</a>
+      <a href="https://v.douyin.com/8a1_tHtWg8E/" target="_blank" rel="noopener">抖音</a>
+      <a href="#" target="_blank" rel="noopener">网易云音乐</a>
+      <a href="mailto:eryutequilasunset@foxmail.com">发邮件</a>
+    </div>
+    <p class="ps">
+      很高兴认识你。
+    </p>
+  </footer>
+
+</main>
+
+<!-- Coze Chat SDK -->
+<script>
+(function() {
+  var API = window.location.origin + '/api/chat';
+  var conversationId = '';
+
+  var msgs = document.getElementById('chat-msgs');
+  var input = document.getElementById('chat-input');
+  var sendBtn = document.getElementById('chat-send');
+
+  function now() {
+    var d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function addMsg(text, cls) {
+    var div = document.createElement('div');
+    div.className = 'msg ' + cls;
+    div.style.animation = 'msgIn 0.35s ease-out both';
+    var span = document.createElement('span');
+    span.textContent = text;
+    div.appendChild(span);
+    var t = document.createElement('div');
+    t.className = 'time';
+    t.textContent = now();
+    div.appendChild(t);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function setLoading(loading) {
+    input.disabled = loading;
+    sendBtn.disabled = loading;
+    sendBtn.textContent = loading ? '...' : '发送';
+  }
+
+  async function send() {
+    var text = input.value.trim();
+    if (!text) return;
+
+    addMsg(text, 'from-me');
+    input.value = '';
+    setLoading(true);
+
+    // 加一个占位气泡，收到回复后替换
+    var placeholder = addMsg('...', 'from-her');
+
+    try {
+      var res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: 'web-visitor',
+          query: text,
+          conversation_id: conversationId,
+        }),
+      });
+      var data = await res.json();
+
+      if (data.conversation_id) conversationId = data.conversation_id;
+
+      // 从 messages 里取 assistant 回复，优先 answer 类型
+      var reply = '嗯...没想好怎么回';
+      if (data.messages) {
+        var assistants = data.messages.filter(function(m) { return m.role === 'assistant'; });
+        // 优先找 type=answer，排除 verbose/follow_up
+        var answer = assistants.filter(function(m) { return m.type === 'answer'; }).pop();
+        if (!answer) {
+          // 没 answer 就找普通的（排除 verbose 和 follow_up）
+          answer = assistants.filter(function(m) { return m.type !== 'verbose' && m.type !== 'follow_up'; }).pop();
+        }
+        if (answer && answer.content) reply = answer.content;
+      }
+      placeholder.querySelector('span').textContent = reply;
+      placeholder.querySelector('.time').textContent = now();
+    } catch (e) {
+      placeholder.querySelector('span').textContent = '哎呀连接断了，刷新一下试试？';
+    }
+    setLoading(false);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') send();
+  });
+})();
+</script>
+
+</body>
+</html>

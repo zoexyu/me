@@ -1,0 +1,10 @@
+.claude/
+chatlog_export*
+temp_img.jpg
+聊天记录/
+pd1_trial_analysis/
+strawberry-widget/
+proxy_server.py
+pixel-opening.html
+*.jsonl
+node_modules/
