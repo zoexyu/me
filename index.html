@@ -178,6 +178,88 @@ main {
 }
 
 /* ============================================
+   STATUS BAR
+   ============================================ */
+.status-bar {
+  max-width: 520px;
+  margin: 0 auto 2rem;
+  background: var(--card);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 0.75rem;
+}
+
+.status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.status-toggle:hover { background: rgba(0,0,0,0.02); }
+
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.normal { background: #60c060; box-shadow: 0 0 4px rgba(96,192,96,0.4); }
+.status-dot.warn   { background: #d4a030; box-shadow: 0 0 4px rgba(212,160,48,0.4); }
+.status-dot.error  { background: #c41e3a; box-shadow: 0 0 4px rgba(196,30,58,0.4); }
+
+.status-label {
+  flex: 1;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.status-arrow {
+  font-size: 0.55rem;
+  color: var(--muted);
+  transition: transform 0.3s;
+}
+
+.status-bar.open .status-arrow {
+  transform: rotate(180deg);
+}
+
+.status-detail {
+  border-top: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1rem;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.status-key {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.status-val {
+  color: var(--text);
+  font-size: 0.72rem;
+}
+
+/* ============================================
    CHAT SECTION
    ============================================ */
 .chat-section {
@@ -299,6 +381,14 @@ main {
 @keyframes msgIn {
   from { opacity:0; transform:translateY(10px); }
   to   { opacity:1; transform:translateY(0); }
+}
+
+.slow-hint {
+  font-size: 0.65rem;
+  color: var(--muted);
+  opacity: 0.55;
+  margin-top: 0.4rem;
+  font-style: italic;
 }
 
 /* 输入区 */
@@ -450,6 +540,35 @@ footer .ps {
     </div>
   </section>
 
+  <!-- ===== STATUS BAR ===== -->
+  <section class="status-bar reveal reveal-d3" id="status-bar">
+    <div class="status-toggle" id="status-toggle">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-label" id="status-label">加载中...</span>
+      <span class="status-arrow">&#9660;</span>
+    </div>
+    <div class="status-detail" id="status-detail">
+      <div class="status-grid">
+        <div class="status-item">
+          <span class="status-key">关于本站</span>
+          <span class="status-val">vibe coding 搭建 · 扣子(Coze) 豆包模型驱动</span>
+        </div>
+        <div class="status-item">
+          <span class="status-key">今日调用</span>
+          <span class="status-val" id="stat-calls">-</span>
+        </div>
+        <div class="status-item">
+          <span class="status-key">代理状态</span>
+          <span class="status-val" id="stat-coze">-</span>
+        </div>
+        <div class="status-item">
+          <span class="status-key">订阅剩余</span>
+          <span class="status-val" id="stat-days">-</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== CHAT ===== -->
   <section class="chat-section reveal reveal-d4" id="chat">
     <div class="section-head">
@@ -553,8 +672,32 @@ footer .ps {
     input.value = '';
     setLoading(true);
 
-    // 加一个占位气泡，收到回复后替换
-    var placeholder = addMsg('...', 'from-her');
+    var placeholder = addMsg('', 'from-her');
+    var placeholderSpan = placeholder.querySelector('span');
+
+    // 动态省略号
+    var dots = [' · ', ' ·· ', ' ··· '];
+    var dotIdx = 0;
+    placeholderSpan.textContent = dots[0];
+    var dotTimer = setInterval(function() {
+      dotIdx = (dotIdx + 1) % 3;
+      placeholderSpan.textContent = dots[dotIdx];
+    }, 400);
+
+    // 10秒超时提示
+    var slowHint = null;
+    var slowTimer = setTimeout(function() {
+      slowHint = document.createElement('div');
+      slowHint.className = 'slow-hint';
+      slowHint.textContent = '回复较长，耐心等待哦~';
+      placeholder.appendChild(slowHint);
+    }, 10000);
+
+    function cleanup() {
+      clearInterval(dotTimer);
+      clearTimeout(slowTimer);
+      if (slowHint) slowHint.remove();
+    }
 
     try {
       var res = await fetch(API, {
@@ -570,22 +713,21 @@ footer .ps {
 
       if (data.conversation_id) conversationId = data.conversation_id;
 
-      // 从 messages 里取 assistant 回复，优先 answer 类型
       var reply = '嗯...没想好怎么回';
       if (data.messages) {
         var assistants = data.messages.filter(function(m) { return m.role === 'assistant'; });
-        // 优先找 type=answer，排除 verbose/follow_up
         var answer = assistants.filter(function(m) { return m.type === 'answer'; }).pop();
         if (!answer) {
-          // 没 answer 就找普通的（排除 verbose 和 follow_up）
           answer = assistants.filter(function(m) { return m.type !== 'verbose' && m.type !== 'follow_up'; }).pop();
         }
         if (answer && answer.content) reply = answer.content;
       }
-      placeholder.querySelector('span').textContent = reply;
+      cleanup();
+      placeholderSpan.textContent = reply;
       placeholder.querySelector('.time').textContent = now();
     } catch (e) {
-      placeholder.querySelector('span').textContent = '哎呀连接断了，刷新一下试试？';
+      cleanup();
+      placeholderSpan.textContent = '哎呀连接断了，刷新一下试试？';
     }
     setLoading(false);
     msgs.scrollTop = msgs.scrollHeight;
@@ -595,6 +737,54 @@ footer .ps {
   input.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') send();
   });
+
+  // ===== 状态面板 =====
+  var statusBar = document.getElementById('status-bar');
+  var statusDot = document.getElementById('status-dot');
+  var statusLabel = document.getElementById('status-label');
+  var statusDetail = document.getElementById('status-detail');
+  var statCalls = document.getElementById('stat-calls');
+  var statCoze = document.getElementById('stat-coze');
+  var statDays = document.getElementById('stat-days');
+  var statusOpen = false;
+
+  document.getElementById('status-toggle').addEventListener('click', function() {
+    statusOpen = !statusOpen;
+    statusDetail.style.display = statusOpen ? 'block' : 'none';
+    statusBar.classList.toggle('open', statusOpen);
+  });
+
+  function updateStatus() {
+    fetch(window.location.origin + '/status')
+      .then(function(r) { return r.json(); })
+      .then(function(s) {
+        // 指标点
+        var dotLevel = 'normal';
+        var label = '一切正常';
+        if (s.coze_status === 'exhausted') { dotLevel = 'error'; label = '配额已耗尽，暂时无法聊天'; }
+        else if (s.coze_status === 'error') { dotLevel = 'warn'; label = '代理异常'; }
+        else if (s.calls_today > s.calls_limit * 0.85) { dotLevel = 'warn'; label = '今日调用接近上限'; }
+
+        statusDot.className = 'status-dot ' + dotLevel;
+        statusLabel.textContent = label;
+        statCalls.textContent = s.calls_today + ' / ' + s.calls_limit + ' 次';
+        statCoze.textContent = s.coze_status === 'normal' ? '畅通' : s.coze_status;
+        statCoze.style.color = s.coze_status === 'normal' ? '#60c060' : '#c41e3a';
+
+        // 剩余天数
+        var end = new Date(s.subscription_end);
+        var now = new Date();
+        var days = Math.max(0, Math.ceil((end - now) / (1000*60*60*24)));
+        statDays.textContent = end.toISOString().slice(0, 10) + '（剩 ' + days + ' 天）';
+      })
+      .catch(function() {
+        statusDot.className = 'status-dot error';
+        statusLabel.textContent = '状态服务器无响应';
+      });
+  }
+
+  updateStatus();
+  setInterval(updateStatus, 60000);
 })();
 </script>
 
