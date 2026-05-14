@@ -1025,7 +1025,7 @@ footer .ps {
     msgFeedback.className = 'msg-feedback';
     msgFeedback.textContent = '提交中...';
 
-    fetch(window.location.origin + '/messages', {
+    fetch(window.location.origin + '/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
