@@ -16,17 +16,24 @@ DAILY_LIMIT = 100  # Coze 免费每日调用次数
 HERE = os.path.dirname(os.path.abspath(__file__))
 HTML_FILE = os.path.join(HERE, 'index.html')
 MESSAGES_FILE = os.path.join(HERE, 'messages.json')
+STATS_FILE = os.path.join(HERE, 'stats.json')
 
-# 状态追踪
+# 状态追踪（持久化到文件）
 today = date.today().isoformat()
-stats = {
-    'date': today,
-    'calls': 0,
-    'successes': 0,
-    'errors': 0,
-    'last_error': None,
-    'coze_status': 'normal',  # normal | exhausted | error
-}
+stats = {'date': today, 'calls': 0, 'successes': 0, 'errors': 0, 'last_error': None, 'coze_status': 'normal'}
+if os.path.exists(STATS_FILE):
+    try:
+        with open(STATS_FILE, 'r', encoding='utf-8') as f:
+            saved = json.load(f)
+            if saved.get('date') == today:
+                stats = saved
+    except Exception:
+        pass
+
+
+def _save_stats():
+    with open(STATS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(stats, f, ensure_ascii=False)
 
 
 def _load_messages():
@@ -46,7 +53,7 @@ def _save_messages(msgs):
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/status':
+        if self.path in ('/status', '/api/status'):
             self._json_response(200, {
                 'calls_today': stats['calls'],
                 'calls_limit': DAILY_LIMIT,
@@ -59,7 +66,7 @@ class Handler(BaseHTTPRequestHandler):
             })
             return
 
-        if self.path == '/messages':
+        if self.path in ('/messages', '/api/messages'):
             msgs = _load_messages()
             self._json_response(200, msgs)
             return
@@ -95,7 +102,7 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(raw_body.decode('gbk'))
 
         # 留言板
-        if self.path == '/messages':
+        if self.path in ('/messages', '/api/messages'):
             name = body.get('name', '').strip()
             msg_text = body.get('message', '').strip()
             is_anon = body.get('is_anonymous', False)
@@ -129,8 +136,10 @@ class Handler(BaseHTTPRequestHandler):
         if stats['date'] != td:
             stats = {'date': td, 'calls': 0, 'successes': 0, 'errors': 0,
                      'last_error': None, 'coze_status': 'normal'}
+            _save_stats()
 
         stats['calls'] += 1
+        _save_stats()
 
         payload = json.dumps({
             'bot_id': BOT_ID,

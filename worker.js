@@ -67,8 +67,8 @@ export default {
       });
     }
 
-    // 留言板（无状态版本，仅返回示例）
-    if (path === '/messages') {
+    // 留言板（无状态版本）
+    if (path === '/api/messages') {
       if (request.method === 'POST') {
         return new Response(JSON.stringify({ ok: false, error: '留言功能云版本开发中' }), {
           status: 501,
