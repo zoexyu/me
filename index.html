@@ -219,6 +219,16 @@ main {
   opacity: 0.7;
 }
 
+.status-hint {
+  font-size: 0.6rem;
+  color: var(--muted);
+  opacity: 0.4;
+}
+
+.status-bar.open .status-hint {
+  opacity: 0;
+}
+
 .status-arrow {
   font-size: 0.55rem;
   color: var(--muted);
@@ -545,6 +555,7 @@ footer .ps {
     <div class="status-toggle" id="status-toggle">
       <span class="status-dot" id="status-dot"></span>
       <span class="status-label" id="status-label">加载中...</span>
+      <span class="status-hint">点击查看</span>
       <span class="status-arrow">&#9660;</span>
     </div>
     <div class="status-detail" id="status-detail">
@@ -747,11 +758,13 @@ footer .ps {
   var statCoze = document.getElementById('stat-coze');
   var statDays = document.getElementById('stat-days');
   var statusOpen = false;
+  var statusHint = document.querySelector('.status-hint');
 
   document.getElementById('status-toggle').addEventListener('click', function() {
     statusOpen = !statusOpen;
     statusDetail.style.display = statusOpen ? 'block' : 'none';
     statusBar.classList.toggle('open', statusOpen);
+    statusHint.textContent = statusOpen ? '收起' : '点击查看';
   });
 
   function updateStatus() {
